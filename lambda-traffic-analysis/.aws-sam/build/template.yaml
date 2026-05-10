@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Lambda Traffic Analysis - File Upload Stream Replication of Muller et
+  al. 2020 paper
+
+  '
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 30
+    Environment:
+      Variables:
+        BUCKET_NAME:
+          Ref: UploadBucket
+Resources:
+  FileUpload128:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: traffic-analysis-128mb
+      Handler: handler.lambda_handler
+      CodeUri: FileUpload128
+      MemorySize: 128
+      Policies:
+      - S3CrudPolicy:
+          BucketName:
+            Ref: UploadBucket
+      Events:
+        Api128:
+          Type: Api
+          Properties:
+            Path: /upload128
+            Method: post
+    Metadata:
+      SamResourceId: FileUpload128
+  FileUpload512:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: traffic-analysis-512mb
+      Handler: handler.lambda_handler
+      CodeUri: FileUpload512
+      MemorySize: 512
+      Policies:
+      - S3CrudPolicy:
+          BucketName:
+            Ref: UploadBucket
+      Events:
+        Api512:
+          Type: Api
+          Properties:
+            Path: /upload512
+            Method: post
+    Metadata:
+      SamResourceId: FileUpload512
+  FileUpload3008:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: traffic-analysis-3008mb
+      Handler: handler.lambda_handler
+      CodeUri: FileUpload3008
+      MemorySize: 3008
+      Policies:
+      - S3CrudPolicy:
+          BucketName:
+            Ref: UploadBucket
+      Events:
+        Api3008:
+          Type: Api
+          Properties:
+            Path: /upload3008
+            Method: post
+    Metadata:
+      SamResourceId: FileUpload3008
+  UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: lambda-traffic-analysis-${AWS::AccountId}
+      LifecycleConfiguration:
+        Rules:
+        - Id: DeleteOldUploads
+          Status: Enabled
+          ExpirationInDays: 3
+Outputs:
+  Api128Url:
+    Description: 128 MB endpoint
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/upload128
+  Api512Url:
+    Description: 512 MB endpoint
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/upload512
+  Api3008Url:
+    Description: 3008 MB endpoint
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/upload3008
+  BucketName:
+    Description: S3 bucket name
+    Value:
+      Ref: UploadBucket
